@@ -1,0 +1,81 @@
+from __future__ import print_function
+import numpy as np
+import matplotlib.pyplot as plt
+import cv2
+from IPython.display import HTML, YouTubeVideo
+import matplotlib.patches as patches
+from matplotlib.lines import Line2D
+%matplotlib inline
+
+
+def calculate_regression(points): # input is the result of np.argwhere
+    np_points = np.array(points)
+
+    np_points = np_points.astype(float)
+    xs = []
+    ys = []
+    xy = 0
+    x_sq =0
+    for i in np_points:
+        x = i[0:1]
+        y = i[1:]
+        xs.append(x)
+        ys.append(y)
+        xy = x*y + xy
+        x_sq = x**2 + x_sq
+
+    x_mean = sum(xs)/len(xs)
+    y_mean = sum(ys)/len(ys)
+    xy_mean = xy/len(xs)
+    x_squared_mean = x_sq/len(xs)
+
+    m = ((x_mean[0] * y_mean[0]) - (xy_mean[0]))/ (((x_mean[0])**2) - x_squared_mean[0])
+    b = y_mean[0] - m*x_mean[0]
+    
+    return(m,b)
+
+
+
+def find_inliers(m, b, shape): #finding inliers to make sure regression line stays within the image 
+    x_bound, y_bound = shape
+    x1 = 0
+    x2 = x_bound
+    y1 = x1 * m + b
+    y2 = x2 * m + b
+    return x1,y1,x2,y2 
+ 
+ 
+# calculating regression line through the star image 
+m,b = calculate_regression(np.argwhere(star))
+x1, y1, x2, y2 = find_inliers(m,b, star.shape)
+
+fig,ax = plt.subplots()
+ax.imshow(star, cmap='gray');
+regression = Line2D([y1,y2],[x1,x2], color='lime')
+ax.add_line(regression);
+
+
+
+
+# run the code below to test: 
+
+#adding in all the files 
+lightningbolt      = cv2.imread('shapes/lightningbolt.png', cv2.IMREAD_GRAYSCALE)
+blob               = cv2.imread('shapes/blob.png', cv2.IMREAD_GRAYSCALE)
+star               = cv2.imread('shapes/star.png', cv2.IMREAD_GRAYSCALE)
+squishedstar       = cv2.imread('shapes/squishedstar.png', cv2.IMREAD_GRAYSCALE)
+squishedturnedstar = cv2.imread('shapes/squishedturnedstar.png', cv2.IMREAD_GRAYSCALE)
+letterj            = cv2.imread('shapes/letterj.png', cv2.IMREAD_GRAYSCALE)
+
+images = [lightningbolt, blob, star, squishedstar, squishedturnedstar, letterj]
+
+for i in images:
+    _, i = cv2.threshold(i,125,255,cv2.THRESH_BINARY)
+    fig,ax = plt.subplots()
+    ax.imshow(i, cmap='gray');
+    m,b = calculate_regression(np.argwhere(i)) #calculate the regression slope and y intercept
+    x1, y1, x2, y2 = find_inliers(m,b, i.shape)
+    #fig,ax = plt.subplots()
+    ax.imshow(i, cmap='gray');
+    regression = Line2D([y1,y2],[x1,x2], color='lime') #plotting the regline through the image
+    ax.add_line(regression);
